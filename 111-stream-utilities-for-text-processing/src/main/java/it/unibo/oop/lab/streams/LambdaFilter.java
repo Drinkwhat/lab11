@@ -45,13 +45,16 @@ public final class LambdaFilter extends JFrame {
          */
         IDENTITY("No modifications", Function.identity()),
         LOWERCASE("Convert to lowercase", String::toLowerCase),
-        COUNTCHARS("Count the number of chars", s -> String.valueOf(s.length())),
-        COUNTLINES("Count the number of lines", s -> String.valueOf(s.split("\n").length)),
-        SORT("List all the words in alphabetical order", s -> String.join(" ", Arrays.stream(s.split(" ")).sorted().toList())),
+        COUNTCHARS("Count the number of chars", text -> String.valueOf(text.length())),
+        COUNTLINES("Count the number of lines", text -> String.valueOf(text.split("\n").length)),
+        SORT(
+            "List all the words in alphabetical order", 
+            text -> String.join(" ", Arrays.stream(text.split(" ")).sorted().toList())
+        ),
         COUNTWORDS(
             "Write the count for each word, e.g. \"word word pippo\" should output \"pippo -> 1 word -> 2", 
-            s -> Arrays.stream(s.split(" "))
-                    .collect(Collectors.groupingBy(w -> w, Collectors.counting()))
+            text -> Arrays.stream(text.split(" "))
+                    .collect(Collectors.groupingBy(word -> word, Collectors.counting()))
                     .entrySet().stream()
                     .map(e -> e.getKey() + " -> " + e.getValue())
                     .collect(Collectors.joining("\n"))

@@ -23,6 +23,9 @@ public final class AnotherConcurrentGUI extends JFrame {
     private final transient Counter counter = new Counter();
     private final transient Stopper stopper = new Stopper();
     private final JLabel display = new JLabel();
+    private final JButton up = new JButton("up");
+    private final JButton down = new JButton("down");
+    private final JButton stop = new JButton("stop");
 
     /**
      * Builds a new CGUI.
@@ -32,9 +35,6 @@ public final class AnotherConcurrentGUI extends JFrame {
         JFrameUtil.dimensionJFrame(this);
 
         final JPanel panel = new JPanel();
-        final JButton up = new JButton("up");
-        final JButton down = new JButton("down");
-        final JButton stop = new JButton("stop");
 
         panel.add(display);
         panel.add(up);
@@ -48,12 +48,14 @@ public final class AnotherConcurrentGUI extends JFrame {
 
         up.addActionListener(e -> counter.increment());
         down.addActionListener(e -> counter.decrement());
-        stop.addActionListener(e -> {
-            counter.stopCounting();
-            up.setEnabled(false);
-            down.setEnabled(false);
-            stop.setEnabled(false);
-        });
+        stop.addActionListener(e -> disableButtonsAndStopCounting());
+    }
+
+    private void disableButtonsAndStopCounting() {
+        counter.stopCounting();
+        up.setEnabled(false);
+        down.setEnabled(false);
+        stop.setEnabled(false);
     }
 
     /**
@@ -104,7 +106,7 @@ public final class AnotherConcurrentGUI extends JFrame {
         public void run() {
             try {
                 Thread.sleep(TIME_SLEEP);
-                counter.stopCounting();
+                disableButtonsAndStopCounting();
             } catch (final InterruptedException e) {
                 e.printStackTrace(); // NOPMD: this is just an example
             }
