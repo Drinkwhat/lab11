@@ -1,7 +1,8 @@
 package it.unibo.oop.workers02;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.stream.IntStream;
+import java.util.List;
 
 /**
  * This is a implementation of summing the elements of a matrix.
@@ -20,15 +21,37 @@ public class MultiThreadedMatrix implements SumMatrix {
 
     private double sum(final double[] list) {
         final int size = list.length % nthread + list.length / nthread;
-        
-        return IntStream
-                .iterate(0, start -> start + size)
-                .limit(nthread)
-                .mapToObj(start -> new Worker(list, start, size))
-                .peek(Thread::start)
-                .peek(MultiThreadedMatrix::joinUninterruptibly)
-                .mapToDouble(Worker::getResult)
-                .sum();
+        /*
+         * Build a list of workers
+         */
+        final List<Worker> workers = new ArrayList<>(nthread);
+        for (int start = 0; start < list.length; start += size) {
+            workers.add(new Worker(list, start, size));
+        }
+        /*
+         * Start them
+         */
+        for (final Worker w: workers) {
+            w.start();
+        }
+        /*
+         * Wait for every one of them to finish. This operation is _way_ better done by
+         * using barriers and latches, and the whole operation would be better done with
+         * futures.
+         */
+        long sum = 0;
+        for (final Worker w: workers) {
+            try {
+                w.join();
+                sum += w.getResult();
+            } catch (final InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+        /*
+         * Return the sum
+         */
+        return sum;
     }
 
     /**
@@ -41,19 +64,6 @@ public class MultiThreadedMatrix implements SumMatrix {
             res += sum(list);
         }
        return res;
-    }
-
-    @SuppressWarnings("PMD.AvoidPrintStackTrace")
-    private static void joinUninterruptibly(final Thread target) {
-        var joined = false;
-        while (!joined) {
-            try {
-                target.join();
-                joined = true;
-            } catch (final InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private static class Worker extends Thread {
@@ -76,7 +86,7 @@ public class MultiThreadedMatrix implements SumMatrix {
         }
 
         @Override
-        @SuppressWarnings("PMD.SystemPrintln")
+        // @SuppressWarnings("PMD.SystemPrintln")
         public synchronized void run() {
             //System.out.println("Working from position " + startpos + " to position " + (startpos + nelem - 1));
             for (final var elem : list) {
