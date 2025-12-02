@@ -32,7 +32,7 @@ public final class MultiThreadedListSumClassic implements SumList {
         /*
          * Start them
          */
-        for (final Worker w: workers) {
+        for (final Worker w : workers) {
             w.start();
         }
         /*
@@ -79,9 +79,9 @@ public final class MultiThreadedListSumClassic implements SumList {
         }
 
         @Override
-        @SuppressWarnings("PMD.SystemPrintln")
+        //@SuppressWarnings("PMD.SystemPrintln")
         public synchronized void run() {
-            System.out.println("Working from position " + startpos + " to position " + (startpos + nelem - 1));
+            //System.out.println("Working from position " + startpos + " to position " + (startpos + nelem - 1));
             for (int i = startpos; i < list.size() && i < startpos + nelem; i++) {
                 this.res += this.list.get(i);
             }

@@ -1,14 +1,12 @@
-package it.unibo.oop.workers01;
+package it.unibo.oop.workers02;
 
-import java.util.List;
+import java.util.Arrays;
 import java.util.stream.IntStream;
 
 /**
- * This is an implementation using streams.
- *
+ * This is a implementation of summing the elements of a matrix.
  */
-@SuppressWarnings("CPD-START")
-public final class MultiThreadedListSumWithStreams implements SumList {
+public class MultiThreadedMatrix implements SumMatrix {
 
     private final int nthread;
 
@@ -16,27 +14,33 @@ public final class MultiThreadedListSumWithStreams implements SumList {
      * @param nthread
      *            no. of thread performing the sum.
      */
-    public MultiThreadedListSumWithStreams(final int nthread) {
+    public MultiThreadedMatrix(final int nthread) {
         this.nthread = nthread;
     }
 
-    @Override
-    public long sum(final List<Integer> list) {
-        final int size = list.size() % nthread + list.size() / nthread;
-        /*
-         * Build a stream of workers
-         */
+    private double sum(final double[] list) {
+        final int size = list.length % nthread + list.length / nthread;
+        
         return IntStream
                 .iterate(0, start -> start + size)
                 .limit(nthread)
                 .mapToObj(start -> new Worker(list, start, size))
-                // Start them
                 .peek(Thread::start)
-                // Join them
-                .peek(MultiThreadedListSumWithStreams::joinUninterruptibly)
-                // Get their result and sum
-                .mapToLong(Worker::getResult)
+                .peek(MultiThreadedMatrix::joinUninterruptibly)
+                .mapToDouble(Worker::getResult)
                 .sum();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public double sum(final double[][] matrix) {
+        double res = 0;
+        for (final double[] list : matrix) {
+            res += sum(list);
+        }
+       return res;
     }
 
     @SuppressWarnings("PMD.AvoidPrintStackTrace")
@@ -53,34 +57,30 @@ public final class MultiThreadedListSumWithStreams implements SumList {
     }
 
     private static class Worker extends Thread {
-        private final List<Integer> list;
-        private final int startpos;
-        private final int nelem;
-        private long res;
+        private final double[] list;
+        private double res;
 
         /**
          * Build a new worker.
          *
          * @param list
          *            the list to sum
-         * @param startpos
+         * @param start
          *            the initial position for this worker
          * @param nelem
          *            the no. of elems to sum up for this worker
          */
-        Worker(final List<Integer> list, final int startpos, final int nelem) {
+        Worker(final double[] list, final int start, final int nelem) {
             super();
-            this.list = list;
-            this.startpos = startpos;
-            this.nelem = nelem;
+            this.list = Arrays.copyOfRange(list, start, Math.min(start + nelem, list.length));
         }
 
         @Override
-        //@SuppressWarnings("PMD.SystemPrintln")
+        @SuppressWarnings("PMD.SystemPrintln")
         public synchronized void run() {
             //System.out.println("Working from position " + startpos + " to position " + (startpos + nelem - 1));
-            for (int i = startpos; i < list.size() && i < startpos + nelem; i++) {
-                this.res += this.list.get(i);
+            for (final var elem : list) {
+                this.res += elem;
             }
         }
 
@@ -89,9 +89,8 @@ public final class MultiThreadedListSumWithStreams implements SumList {
          *
          * @return the sum of every element in the array
          */
-        public synchronized long getResult() {
+        public synchronized double getResult() {
             return this.res;
         }
-
     }
 }
