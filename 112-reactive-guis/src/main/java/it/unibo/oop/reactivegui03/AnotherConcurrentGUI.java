@@ -20,8 +20,8 @@ public final class AnotherConcurrentGUI extends JFrame {
     private static final long serialVersionUID = 1L;
 
     private static final int TIME_SLEEP = 10_000;
-    private final Counter counter = new Counter();
-    private final Stopper stopper = new Stopper();
+    private final transient Counter counter = new Counter();
+    private final transient Stopper stopper = new Stopper();
     private final JLabel display = new JLabel();
 
     /**
